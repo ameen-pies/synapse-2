@@ -5,14 +5,24 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+// Mock professors list - will be linked to MongoDB later
+const PROFESSORS = [
+  "Dr. Marie Dubois",
+  "Prof. Jean Martin",
+  "Dr. Sophie Laurent",
+  "Prof. Pierre Bernard",
+  "Dr. Claire Moreau"
+];
 
 export default function Contact() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     recipient: "",
+    professor: "",
     subject: "",
     message: ""
   });
@@ -29,6 +39,7 @@ export default function Contact() {
       name: "",
       email: "",
       recipient: "",
+      professor: "",
       subject: "",
       message: ""
     });
@@ -60,24 +71,20 @@ export default function Contact() {
 
             <div className="space-y-2">
               <Label htmlFor="email">Email *</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="votre@email.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="pl-9"
-                  required
-                />
-              </div>
+              <Input
+                id="email"
+                type="email"
+                placeholder="votre@email.com"
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                required
+              />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="recipient">Destinataire *</Label>
-            <Select value={formData.recipient} onValueChange={(value) => setFormData({...formData, recipient: value})}>
+            <Select value={formData.recipient} onValueChange={(value) => setFormData({...formData, recipient: value, professor: ""})}>
               <SelectTrigger>
                 <SelectValue placeholder="Choisissez un destinataire" />
               </SelectTrigger>
@@ -88,6 +95,22 @@ export default function Contact() {
               </SelectContent>
             </Select>
           </div>
+
+          {formData.recipient === "professor" && (
+            <div className="space-y-2">
+              <Label htmlFor="professor">Sélectionner un professeur *</Label>
+              <Select value={formData.professor} onValueChange={(value) => setFormData({...formData, professor: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisissez un professeur" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROFESSORS.map((prof) => (
+                    <SelectItem key={prof} value={prof}>{prof}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="subject">Sujet *</Label>
@@ -120,24 +143,6 @@ export default function Contact() {
           </Button>
         </form>
       </Card>
-
-      <div className="mt-8 grid md:grid-cols-3 gap-4">
-        <Card className="p-4 text-center">
-          <Mail className="w-8 h-8 mx-auto mb-2 text-primary" />
-          <h3 className="font-semibold mb-1">Email</h3>
-          <p className="text-sm text-muted-foreground">contact@synapse.com</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <Mail className="w-8 h-8 mx-auto mb-2 text-primary" />
-          <h3 className="font-semibold mb-1">Support</h3>
-          <p className="text-sm text-muted-foreground">support@synapse.com</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <Mail className="w-8 h-8 mx-auto mb-2 text-primary" />
-          <h3 className="font-semibold mb-1">Professeurs</h3>
-          <p className="text-sm text-muted-foreground">profs@synapse.com</p>
-        </Card>
-      </div>
     </div>
   );
 }

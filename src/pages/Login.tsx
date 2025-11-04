@@ -51,7 +51,7 @@ export default function Login() {
 
           {/* Back to Website Link */}
           <Link 
-            to="/dashboard" 
+            to="/" 
             className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
           >
             <span>←</span>
