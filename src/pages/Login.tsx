@@ -3,19 +3,73 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { BookOpen, Mail, Lock, Eye, EyeOff, GraduationCap } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, GraduationCap } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { userDataAPI } from "@/services/api";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual authentication
-    navigate("/dashboard");
+    
+    // Basic validation
+    if (!formData.email || !formData.password) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Call login API
+      const response = await userDataAPI.login(formData.email, formData.password);
+      
+      console.log("✅ Login successful:", response);
+
+      // Store user data in localStorage
+      localStorage.setItem('userId', response.user._id || '');
+      localStorage.setItem('userName', response.user.name || '');
+      localStorage.setItem('userEmail', response.user.email || '');
+      localStorage.setItem('userAvatar', response.user.avatar || 'Felix');
+
+      // Show success message
+      toast({
+        title: "Connexion réussie! 🎉",
+        description: `Bienvenue ${response.user.name}`,
+      });
+
+      // Navigate to dashboard
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
+
+    } catch (error: any) {
+      console.error("❌ Login error:", error);
+      
+      // Handle specific error messages
+      const errorMessage = error.response?.data?.message || "Erreur lors de la connexion";
+      
+      toast({
+        title: "Erreur de connexion",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -87,10 +141,11 @@ export default function Login() {
                   id="email"
                   type="email"
                   placeholder="votre@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
                   className="pl-10"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -103,15 +158,17 @@ export default function Login() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
                   className="pl-10 pr-10"
                   required
+                  disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={loading}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -120,7 +177,7 @@ export default function Login() {
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Checkbox id="remember" />
+                <Checkbox id="remember" disabled={loading} />
                 <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
                   Se souvenir de moi
                 </Label>
@@ -130,8 +187,8 @@ export default function Login() {
               </Link>
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
-              Se connecter
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              {loading ? "Connexion en cours..." : "Se connecter"}
             </Button>
 
             <div className="relative">
@@ -143,7 +200,7 @@ export default function Login() {
               </div>
             </div>
 
-            <Button variant="outline" type="button" className="w-full">
+            <Button variant="outline" type="button" className="w-full" disabled={loading}>
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>

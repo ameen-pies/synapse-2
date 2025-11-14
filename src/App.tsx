@@ -10,6 +10,7 @@ import Analytics from "./pages/Analytics";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import EditProfile from "./pages/EditProfile";
+import ProfileSettings from "./pages/ProfileSettings";
 import Contact from "./pages/Contact";
 import Community from "./pages/Community";
 import SavedContent from "./pages/SavedContent";
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/edit-profile" element={<EditProfile />} />
+          <Route path="/profile-settings" element={<DashboardLayout><ProfileSettings /></DashboardLayout>} />
           <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
           <Route path="/community" element={<DashboardLayout><Community /></DashboardLayout>} />
           <Route path="/saved" element={<DashboardLayout><SavedContent /></DashboardLayout>} />

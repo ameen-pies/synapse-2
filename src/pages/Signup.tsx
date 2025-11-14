@@ -5,10 +5,40 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Mail, Lock, Eye, EyeOff, GraduationCap, User } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { userDataAPI } from "@/services/api";
+
+const AVATAR_OPTIONS = [
+  { id: "1", type: "boy" },
+  { id: "2", type: "girl" },
+  { id: "3", type: "boy" },
+  { id: "4", type: "girl" },
+  { id: "5", type: "boy" },
+  { id: "6", type: "girl" },
+  { id: "7", type: "boy" },
+  { id: "8", type: "girl" },
+  { id: "10", type: "boy" },
+  { id: "12", type: "girl" },
+  { id: "15", type: "boy" },
+  { id: "18", type: "girl" },
+  { id: "20", type: "boy" },
+  { id: "23", type: "girl" },
+  { id: "25", type: "boy" },
+  { id: "28", type: "girl" },
+  { id: "30", type: "boy" },
+  { id: "33", type: "girl" },
+  { id: "35", type: "boy" },
+  { id: "38", type: "girl" },
+  { id: "40", type: "boy" },
+  { id: "42", type: "girl" },
+  { id: "45", type: "boy" },
+  { id: "48", type: "girl" }
+];
 
 export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -16,11 +46,91 @@ export default function Signup() {
     confirmPassword: ""
   });
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual authentication
-    navigate("/edit-profile");
+    
+    // Validation: Check if passwords match
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Erreur",
+        description: "Les mots de passe ne correspondent pas",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validation: Check password length
+    if (formData.password.length < 6) {
+      toast({
+        title: "Erreur",
+        description: "Le mot de passe doit contenir au moins 6 caractères",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Check if email already exists
+      const emailExists = await userDataAPI.checkEmail(formData.email);
+      if (emailExists) {
+        toast({
+          title: "Erreur",
+          description: "Cet email est déjà utilisé",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Generate a random avatar with mixed genders
+      const randomIndex = Math.floor(Math.random() * AVATAR_OPTIONS.length);
+      const randomAvatar = AVATAR_OPTIONS[randomIndex];
+      const avatarString = `${randomAvatar.id}-${randomAvatar.type}`;
+
+      // Create user data object (excluding confirmPassword)
+      const userData = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        avatar: avatarString,
+      };
+
+      // Save to MongoDB via backend API
+      const newUser = await userDataAPI.create(userData);
+      
+      console.log("✅ User created in MongoDB:", newUser);
+
+      // Show success message
+      toast({
+        title: "Compte créé avec succès! 🎉",
+        description: "Votre compte a été enregistré dans la base de données",
+      });
+
+      // Store user ID in localStorage for later use
+      localStorage.setItem('userId', newUser._id || '');
+      localStorage.setItem('userName', newUser.name);
+      localStorage.setItem('userEmail', newUser.email);
+      localStorage.setItem('userAvatar', newUser.avatar || avatarString);
+
+      // Navigate to profile edit page
+      setTimeout(() => {
+        navigate("/edit-profile");
+      }, 1500);
+
+    } catch (error: any) {
+      console.error("❌ Signup error:", error);
+      toast({
+        title: "Erreur",
+        description: error.response?.data?.message || "Erreur lors de la création du compte",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -96,6 +206,7 @@ export default function Signup() {
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   className="pl-10"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -112,6 +223,7 @@ export default function Signup() {
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   className="pl-10"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -128,11 +240,13 @@ export default function Signup() {
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                   className="pl-10 pr-10"
                   required
+                  disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={loading}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -151,11 +265,13 @@ export default function Signup() {
                   onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                   className="pl-10 pr-10"
                   required
+                  disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={loading}
                 >
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -163,7 +279,7 @@ export default function Signup() {
             </div>
 
             <div className="flex items-start gap-2">
-              <Checkbox id="terms" className="mt-1" />
+              <Checkbox id="terms" className="mt-1" disabled={loading} />
               <Label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer leading-relaxed">
                 J'accepte les{" "}
                 <Link to="#" className="text-primary hover:text-primary/80">
@@ -176,8 +292,13 @@ export default function Signup() {
               </Label>
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
-              Créer mon compte
+            <Button 
+              type="submit"
+              className="w-full" 
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? "Création en cours..." : "Créer mon compte"}
             </Button>
 
             <div className="relative">
@@ -189,7 +310,7 @@ export default function Signup() {
               </div>
             </div>
 
-            <Button variant="outline" type="button" className="w-full">
+            <Button variant="outline" type="button" className="w-full" disabled={loading}>
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
