@@ -16,6 +16,9 @@ import Community from "./pages/Community";
 import SavedContent from "./pages/SavedContent";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
+import MFAVerification from "@/pages/MFAVerification";
+
+// Add this route:
 
 const queryClient = new QueryClient();
 
@@ -37,6 +40,7 @@ const App = () => (
           <Route path="/messages" element={<DashboardLayout><Messages /></DashboardLayout>} />
           <Route path="/analytics" element={<DashboardLayout><Analytics /></DashboardLayout>} />
           <Route path="/contact" element={<DashboardLayout><Contact /></DashboardLayout>} />
+          <Route path="/verify-mfa" element={<MFAVerification />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

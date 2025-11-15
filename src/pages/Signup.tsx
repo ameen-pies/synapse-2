@@ -91,41 +91,39 @@ export default function Signup() {
       const randomAvatar = AVATAR_OPTIONS[randomIndex];
       const avatarString = `${randomAvatar.id}-${randomAvatar.type}`;
 
-      // Create user data object (excluding confirmPassword)
-      const userData = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        avatar: avatarString,
-      };
-
-      // Save to MongoDB via backend API
-      const newUser = await userDataAPI.create(userData);
+      // Use signup endpoint which sends MFA code
+      const response = await userDataAPI.signup(
+        formData.email,
+        formData.password,
+        formData.name
+      );
       
-      console.log("✅ User created in MongoDB:", newUser);
+      console.log("✅ Signup response:", response);
 
       // Show success message
       toast({
-        title: "Compte créé avec succès! 🎉",
-        description: "Votre compte a été enregistré dans la base de données",
+        title: "Inscription réussie! 🎉",
+        description: response.message || "Vérifiez votre email pour le code de vérification",
       });
 
-      // Store user ID in localStorage for later use
-      localStorage.setItem('userId', newUser._id || '');
-      localStorage.setItem('userName', newUser.name);
-      localStorage.setItem('userEmail', newUser.email);
-      localStorage.setItem('userAvatar', newUser.avatar || avatarString);
-
-      // Navigate to profile edit page
+      // Navigate to MFA verification page with email
       setTimeout(() => {
-        navigate("/edit-profile");
+        navigate("/verify-mfa", { 
+          state: { 
+            email: formData.email,
+            fromSignup: true 
+          } 
+        });
       }, 1500);
 
     } catch (error: any) {
       console.error("❌ Signup error:", error);
+      
+      const errorMessage = error.response?.data?.message || "Erreur lors de la création du compte";
+      
       toast({
-        title: "Erreur",
-        description: error.response?.data?.message || "Erreur lors de la création du compte",
+        title: "Erreur d'inscription",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -166,7 +164,7 @@ export default function Signup() {
 
           {/* Back to Website Link */}
           <Link 
-            to="/dashboard" 
+            to="/" 
             className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
           >
             <span>←</span>
@@ -279,7 +277,7 @@ export default function Signup() {
             </div>
 
             <div className="flex items-start gap-2">
-              <Checkbox id="terms" className="mt-1" disabled={loading} />
+              <Checkbox id="terms" className="mt-1" disabled={loading} required />
               <Label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer leading-relaxed">
                 J'accepte les{" "}
                 <Link to="#" className="text-primary hover:text-primary/80">

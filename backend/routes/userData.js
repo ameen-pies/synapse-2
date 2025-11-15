@@ -2,11 +2,13 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const UserData = require('../models/UserData');
+const MFACode = require('../models/MFACode');
+const { sendMFAEmail } = require('../utils/email');
+const { generateMFACode } = require('../utils/mfaHelper');
 
-// GET all user data - retrieves everything from database
+// GET all user data
 router.get('/', async (req, res) => {
   try {
-    // Find all documents and sort by newest first
     const data = await UserData.find().sort({ createdAt: -1 });
     res.json(data);
   } catch (err) {
@@ -14,7 +16,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// CHECK if email exists (MUST be before /:id route)
+// CHECK if email exists
 router.get('/check-email/:email', async (req, res) => {
   try {
     const user = await UserData.findOne({ email: req.params.email.toLowerCase() });
@@ -24,7 +26,7 @@ router.get('/check-email/:email', async (req, res) => {
   }
 });
 
-// LOGIN endpoint - verify email and password
+// LOGIN endpoint - Step 1: Verify credentials and send MFA code
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -36,11 +38,68 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
     }
 
-    // Compare password with hashed password
+    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     
     if (!isMatch) {
       return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
+    }
+
+    // Generate MFA code
+    const mfaCode = generateMFACode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Save MFA code to database
+    await MFACode.create({
+      email: user.email,
+      code: mfaCode,
+      expiresAt: expiresAt,
+      used: false
+    });
+
+    // Send email
+    const emailSent = await sendMFAEmail(user.email, mfaCode, user.name);
+    
+    if (!emailSent) {
+      return res.status(500).json({ message: 'Erreur lors de l\'envoi de l\'email' });
+    }
+
+    res.json({ 
+      message: 'Code de vérification envoyé à votre email',
+      email: user.email
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Error during login: ' + err.message });
+  }
+});
+
+// VERIFY MFA - Step 2: Verify code and complete login
+router.post('/verify-mfa', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    // Find the most recent unused code
+    const mfaRecord = await MFACode.findOne({
+      email: email.toLowerCase(),
+      code: code,
+      used: false,
+      expiresAt: { $gt: new Date() }
+    }).sort({ createdAt: -1 });
+
+    if (!mfaRecord) {
+      return res.status(401).json({ message: 'Code invalide ou expiré' });
+    }
+
+    // Mark code as used
+    mfaRecord.used = true;
+    await mfaRecord.save();
+
+    // Get user data
+    const user = await UserData.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
 
     // Return user data (excluding password)
@@ -49,6 +108,7 @@ router.post('/login', async (req, res) => {
       name: user.name,
       email: user.email,
       phone: user.phone,
+      phoneCode: user.phoneCode,
       location: user.location,
       occupation: user.occupation,
       bio: user.bio,
@@ -57,11 +117,50 @@ router.post('/login', async (req, res) => {
     };
 
     res.json({ 
-      message: 'Connexion réussie',
+      message: 'Vérification réussie',
       user: userResponse
     });
   } catch (err) {
-    res.status(500).json({ message: 'Error during login: ' + err.message });
+    console.error('MFA verification error:', err);
+    res.status(500).json({ message: 'Error during verification: ' + err.message });
+  }
+});
+
+// RESEND MFA CODE
+router.post('/resend-code', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Find user
+    const user = await UserData.findOne({ email: email.toLowerCase() });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    // Generate new MFA code
+    const mfaCode = generateMFACode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Save new code
+    await MFACode.create({
+      email: user.email,
+      code: mfaCode,
+      expiresAt: expiresAt,
+      used: false
+    });
+
+    // Send email
+    const emailSent = await sendMFAEmail(user.email, mfaCode, user.name);
+    
+    if (!emailSent) {
+      return res.status(500).json({ message: 'Erreur lors de l\'envoi de l\'email' });
+    }
+
+    res.json({ message: 'Nouveau code envoyé' });
+  } catch (err) {
+    console.error('Resend code error:', err);
+    res.status(500).json({ message: 'Error resending code: ' + err.message });
   }
 });
 
@@ -78,58 +177,59 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST - Create new user data (SIGNUP)
+// POST - Create new user (SIGNUP with MFA)
 router.post('/', async (req, res) => {
-  // Check if email already exists
   try {
+    // Check if email exists
     const existingUser = await UserData.findOne({ email: req.body.email.toLowerCase() });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already exists' });
     }
-  } catch (err) {
-    return res.status(500).json({ message: 'Error checking email: ' + err.message });
-  }
 
-  // Hash the password before saving
-  let hashedPassword;
-  try {
+    // Hash password
     const salt = await bcrypt.genSalt(10);
-    hashedPassword = await bcrypt.hash(req.body.password, salt);
-  } catch (err) {
-    return res.status(500).json({ message: 'Error hashing password: ' + err.message });
-  }
+    const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
-  // Create new document with data from request body
-  const userData = new UserData({
-    name: req.body.name,
-    email: req.body.email.toLowerCase(),
-    password: hashedPassword, // Store hashed password
-    phone: req.body.phone || '',
-    location: req.body.location || '',
-    occupation: req.body.occupation || '',
-    bio: req.body.bio || '',
-    avatar: req.body.avatar || 'Felix'
-  });
+    // Create new user
+    const userData = new UserData({
+      name: req.body.name,
+      email: req.body.email.toLowerCase(),
+      password: hashedPassword,
+      phone: req.body.phone || '',
+      phoneCode: req.body.phoneCode || '+33',
+      location: req.body.location || '',
+      occupation: req.body.occupation || '',
+      bio: req.body.bio || '',
+      avatar: req.body.avatar || 'initials'
+    });
 
-  try {
-    // Save to database
-    const newData = await userData.save();
+    const newUser = await userData.save();
+
+    // Generate MFA code
+    const mfaCode = generateMFACode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Save MFA code
+    await MFACode.create({
+      email: newUser.email,
+      code: mfaCode,
+      expiresAt: expiresAt,
+      used: false
+    });
+
+    // Send email
+    const emailSent = await sendMFAEmail(newUser.email, mfaCode, newUser.name);
     
-    // Return user data without password
-    const userResponse = {
-      _id: newData._id,
-      name: newData.name,
-      email: newData.email,
-      phone: newData.phone,
-      location: newData.location,
-      occupation: newData.occupation,
-      bio: newData.bio,
-      avatar: newData.avatar,
-      createdAt: newData.createdAt
-    };
-    
-    res.status(201).json(userResponse);  // 201 = Created
+    if (!emailSent) {
+      return res.status(500).json({ message: 'Erreur lors de l\'envoi de l\'email' });
+    }
+
+    res.status(201).json({
+      message: 'Inscription réussie. Vérifiez votre email.',
+      email: newUser.email
+    });
   } catch (err) {
+    console.error('Signup error:', err);
     res.status(400).json({ message: 'Error saving data: ' + err.message });
   }
 });
@@ -137,7 +237,7 @@ router.post('/', async (req, res) => {
 // PUT - Update existing user data
 router.put('/:id', async (req, res) => {
   try {
-    // If password is being updated, hash it first
+    // If password is being updated, hash it
     if (req.body.password) {
       const salt = await bcrypt.genSalt(10);
       req.body.password = await bcrypt.hash(req.body.password, salt);
@@ -146,7 +246,7 @@ router.put('/:id', async (req, res) => {
     const updatedData = await UserData.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }  // Return updated document
+      { new: true }
     );
     
     if (!updatedData) {

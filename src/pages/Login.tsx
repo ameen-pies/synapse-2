@@ -21,7 +21,6 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
     if (!formData.email || !formData.password) {
       toast({
         title: "Erreur",
@@ -34,32 +33,23 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // Call login API
       const response = await userDataAPI.login(formData.email, formData.password);
       
       console.log("✅ Login successful:", response);
 
-      // Store user data in localStorage
-      localStorage.setItem('userId', response.user._id || '');
-      localStorage.setItem('userName', response.user.name || '');
-      localStorage.setItem('userEmail', response.user.email || '');
-      localStorage.setItem('userAvatar', response.user.avatar || 'Felix');
-
-      // Show success message
       toast({
-        title: "Connexion réussie! 🎉",
-        description: `Bienvenue ${response.user.name}`,
+        title: "Code envoyé! 📧",
+        description: response.message,
       });
 
-      // Navigate to dashboard
+      // Navigate to MFA verification with email
       setTimeout(() => {
-        navigate("/dashboard");
-      }, 1000);
+        navigate("/verify-mfa", { state: { email: formData.email } });
+      }, 1500);
 
     } catch (error: any) {
       console.error("❌ Login error:", error);
       
-      // Handle specific error messages
       const errorMessage = error.response?.data?.message || "Erreur lors de la connexion";
       
       toast({
@@ -76,7 +66,6 @@ export default function Login() {
     <div className="min-h-screen flex">
       {/* Left Side - Hero Section */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary/90 to-primary/80 relative overflow-hidden">
-        {/* Geometric Pattern Overlay */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-20 w-64 h-64 border border-white rotate-45"></div>
           <div className="absolute bottom-40 right-20 w-80 h-80 border border-white rotate-12"></div>
@@ -84,7 +73,6 @@ export default function Login() {
         </div>
         
         <div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
-          {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
               <GraduationCap className="w-7 h-7" />
@@ -92,7 +80,6 @@ export default function Login() {
             <span className="text-2xl font-bold">synapse</span>
           </div>
 
-          {/* Hero Content */}
           <div className="max-w-md">
             <h1 className="text-5xl font-bold mb-6 leading-tight">
               Apprenez. Évoluez. Excellez.
@@ -103,7 +90,6 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Back to Website Link */}
           <Link 
             to="/" 
             className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
