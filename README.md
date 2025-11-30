@@ -1,6 +1,6 @@
 # 🎓 Synapse - Plateforme d'Apprentissage Intelligente
 
-<div align="center">
+<div>
 
 ![Synapse Logo](https://img.shields.io/badge/Synapse-Learning%20Platform-7c3aed?style=for-the-badge&logo=graduation-cap&logoColor=white)
 
@@ -10,8 +10,6 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-06B6D4?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
-
-[Demo](https://lovable.dev/projects/492d2f3e-a756-4755-b9c2-28a0f44549d1) • [Documentation](#documentation) • [Support](#support)
 
 </div>
 
@@ -34,7 +32,7 @@
 
 ## 🌟 À Propos
 
-**Synapse** est une plateforme d'apprentissage en ligne moderne conçue pour offrir une expérience d'apprentissage exceptionnelle. Elle permet aux étudiants d'accéder à des cours de qualité, d'obtenir des certificats professionnels et de rejoindre une communauté active d'apprenants.
+**Synapse** est une plateforme d'apprentissage en ligne moderne conçue pour offrir une expérience d'apprentissage exceptionnelle. Elle permet aux étudiants d'accéder à des cours de qualité et de rejoindre une communauté active d'apprenants.
 
 ### Pourquoi Synapse ?
 
