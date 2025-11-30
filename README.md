@@ -162,7 +162,7 @@ SENDER_PASSWORD=votre-mot-de-passe-app
 
 # Server Configuration
 PORT=5000
-
+```
 
 ### Configuration MongoDB Atlas
 
