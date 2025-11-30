@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+
 const userDataSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -22,7 +23,7 @@ const userDataSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  phoneCode: {  // NEW
+  phoneCode: {
     type: String,
     default: '+33'
   },
@@ -41,6 +42,40 @@ const userDataSchema = new mongoose.Schema({
   avatar: {
     type: String,
     default: 'Felix'
+  },
+  // NEW: Subscription field
+  subscription: {
+    planId: {
+      type: String,
+      enum: ['basic', 'pro', 'premium', ''],
+      default: ''
+    },
+    planName: {
+      type: String,
+      default: ''
+    },
+    price: {
+      type: String,
+      default: ''
+    },
+    startDate: {
+      type: Date,
+      default: null
+    },
+    status: {
+      type: String,
+      enum: ['active', 'cancelled', 'expired', ''],
+      default: ''
+    },
+    paymentMethod: {
+      type: String,
+      enum: ['card', 'bank', 'mobile', ''],
+      default: ''
+    },
+    nextBillingDate: {
+      type: Date,
+      default: null
+    }
   },
   createdAt: {
     type: Date,

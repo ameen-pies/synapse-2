@@ -1,4 +1,4 @@
-import { Home, BookOpen, Users, MessageSquare, BarChart3, CreditCard, HelpCircle, Settings } from "lucide-react";
+import { Home, BookOpen, Users, MessageSquare, BarChart3, Crown, HelpCircle, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -18,11 +18,11 @@ const menuItems = [
   { title: "Forum & Communauté", icon: Users, url: "/community" },
   { title: "Messages", icon: MessageSquare, url: "/messages", badge: 8 },
   { title: "Analytics", icon: BarChart3, url: "/analytics" },
-  { title: "Paiements", icon: CreditCard, url: "/payments" },
   { title: "Contact", icon: HelpCircle, url: "/contact" },
 ];
 
 const bottomItems = [
+  { title: "Abonnement", icon: Crown, url: "/subscription" },
   { title: "Paramètres", icon: Settings, url: "/settings" },
 ];
 
@@ -86,7 +86,13 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild tooltip={item.title}>
                       <NavLink
                         to={item.url}
-                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                            isActive
+                              ? "bg-sidebar-accent text-sidebar-primary"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                          }`
+                        }
                       >
                         <item.icon className="w-5 h-5" />
                         {!isCollapsed && <span>{item.title}</span>}

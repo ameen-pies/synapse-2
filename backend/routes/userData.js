@@ -5,6 +5,8 @@ const UserData = require('../models/UserData');
 const MFACode = require('../models/MFACode');
 const { sendMFAEmail } = require('../utils/email');
 const { generateMFACode } = require('../utils/mfaHelper');
+const { sendPaymentVerificationEmail, sendPaymentSuccessEmail, generateVerificationToken } = require('../utils/paymentEmail');
+const PaymentVerification = require('../models/PaymentVerification');
 
 // GET all user data
 router.get('/', async (req, res) => {
@@ -273,5 +275,143 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: 'Error deleting data: ' + err.message });
   }
 });
+// ROUTE 1: INITIATE PAYMENT - Send verification email
+router.post('/initiate-payment', async (req, res) => {
+  try {
+    const { userId, email, planId, plan, paymentMethod } = req.body;
 
+    // Get user data
+    const user = await UserData.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    // Generate verification token
+    const verificationToken = generateVerificationToken();
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+
+    // Save verification data
+    await PaymentVerification.create({
+      token: verificationToken,
+      userId: userId,
+      email: email,
+      planId: planId,
+      planData: plan,
+      paymentMethod: paymentMethod,
+      verified: false,
+      expiresAt: expiresAt
+    });
+
+    // Send verification email
+    const emailSent = await sendPaymentVerificationEmail(
+      email, 
+      user.name, 
+      plan, 
+      verificationToken
+    );
+
+    if (!emailSent) {
+      return res.status(500).json({ message: 'Erreur lors de l\'envoi de l\'email' });
+    }
+
+    res.json({ 
+      message: 'Email de vérification envoyé',
+      success: true 
+    });
+  } catch (err) {
+    console.error('Payment initiation error:', err);
+    res.status(500).json({ message: 'Erreur lors de l\'initiation du paiement: ' + err.message });
+  }
+});
+
+// ROUTE 2: VERIFY PAYMENT - Called when user clicks email link
+router.post('/verify-payment/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Find verification record
+    const verification = await PaymentVerification.findOne({
+      token: token,
+      verified: false,
+      expiresAt: { $gt: new Date() }
+    });
+
+    if (!verification) {
+      return res.status(401).json({ 
+        message: 'Lien invalide ou expiré',
+        success: false 
+      });
+    }
+
+    // Mark as verified
+    verification.verified = true;
+    await verification.save();
+
+    // Update user subscription
+    const user = await UserData.findById(verification.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    user.subscription = {
+      planId: verification.planId,
+      planName: verification.planData.name,
+      price: verification.planData.price,
+      startDate: new Date(),
+      status: 'active',
+      paymentMethod: verification.paymentMethod,
+      nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    };
+
+    await user.save();
+
+    // Send success email
+    await sendPaymentSuccessEmail(
+      verification.email,
+      user.name,
+      verification.planData
+    );
+
+    res.json({ 
+      message: 'Paiement confirmé avec succès',
+      success: true,
+      subscription: user.subscription
+    });
+  } catch (err) {
+    console.error('Payment verification error:', err);
+    res.status(500).json({ message: 'Erreur lors de la vérification: ' + err.message });
+  }
+});
+
+// ROUTE 3: CHECK VERIFICATION STATUS - Frontend polls this
+router.get('/check-verification/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const verification = await PaymentVerification.findOne({ token });
+
+    if (!verification) {
+      return res.json({ verified: false, expired: true });
+    }
+
+    if (verification.expiresAt < new Date()) {
+      return res.json({ verified: false, expired: true });
+    }
+
+    if (verification.verified) {
+      // Get updated user data
+      const user = await UserData.findById(verification.userId);
+      return res.json({ 
+        verified: true, 
+        expired: false,
+        subscription: user.subscription 
+      });
+    }
+
+    res.json({ verified: false, expired: false });
+  } catch (err) {
+    console.error('Check verification error:', err);
+    res.status(500).json({ message: 'Erreur: ' + err.message });
+  }
+});
 module.exports = router;

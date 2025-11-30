@@ -17,9 +17,14 @@ import SavedContent from "./pages/SavedContent";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 import MFAVerification from "@/pages/MFAVerification";
-
-// Add this route:
-
+import Settings from "./pages/Settings";
+// NEW IMPORTS FOR PAYMENT SYSTEM
+import Subscription from "./pages/Subscription";
+import PaymentCheckout from "./pages/PaymentCheckout";
+import PaymentVerification from "./pages/PaymentVerification";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentPending from '@/pages/PaymentPending';
+import VerifyPayment from '@/pages/VerifyPayment';
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -41,6 +46,15 @@ const App = () => (
           <Route path="/analytics" element={<DashboardLayout><Analytics /></DashboardLayout>} />
           <Route path="/contact" element={<DashboardLayout><Contact /></DashboardLayout>} />
           <Route path="/verify-mfa" element={<MFAVerification />} />
+          <Route path="/settings" element={<DashboardLayout><Settings /></DashboardLayout>} />
+          
+          {/* NEW PAYMENT & SUBSCRIPTION ROUTES */}
+          <Route path="/subscription" element={<DashboardLayout><Subscription /></DashboardLayout>} />
+          <Route path="/payment-checkout" element={<PaymentCheckout />} />
+          <Route path="/payment-verification" element={<PaymentVerification />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment-pending" element={<PaymentPending />} />
+          <Route path="/verify-payment/:token" element={<VerifyPayment />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
