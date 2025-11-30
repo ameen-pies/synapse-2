@@ -1,16 +1,24 @@
 # 🎓 Synapse - Plateforme d'Apprentissage Intelligente
 
 <div>
-
-![Synapse Logo](https://img.shields.io/badge/Synapse-Learning%20Platform-7c3aed?style=for-the-badge&logo=graduation-cap&logoColor=white)
+  
+```ascii
+   ███████╗██╗   ██╗███╗   ██╗ █████╗ ██████╗ ███████╗███████╗
+   ██╔════╝╚██╗ ██╔╝████╗  ██║██╔══██╗██╔══██╗██╔════╝██╔════╝
+   ███████╗ ╚████╔╝ ██╔██╗ ██║███████║██████╔╝███████╗█████╗  
+   ╚════██║  ╚██╔╝  ██║╚██╗██║██╔══██║██╔═══╝ ╚════██║██╔══╝  
+   ███████║   ██║   ██║ ╚████║██║  ██║██║     ███████║███████╗
+   ╚══════╝   ╚═╝   ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝     ╚══════╝╚══════╝
+```
 
 **Une plateforme moderne d'apprentissage en ligne offrant des cours de qualité, des certificats professionnels et une communauté d'apprenants.**
 
-[![React](https://img.shields.io/badge/React-18.3-61DAFB?style=flat&logo=react&logoColor=white)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-06B6D4?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
-
+<img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind" />
+  <img src="https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <img src="https://img.shields.io/badge/Express.js-404D59?style=for-the-badge" alt="Express" />
 </div>
 
 ---
@@ -24,7 +32,6 @@
 - [Configuration](#-configuration)
 - [Utilisation](#-utilisation)
 - [Structure du Projet](#-structure-du-projet)
-- [Déploiement](#-déploiement)
 - [Contribution](#-contribution)
 - [License](#-license)
 
