@@ -110,35 +110,35 @@ async def startup_event():
         # Initialize embedding generator
         embedding_gen = EmbeddingGenerator()
         
-        # Load content from MongoDB WITH CONTENT TYPE TAGS
+        # Load content from MongoDB
         logger.info("Loading content from MongoDB...")
         contents = []
         
-        # Load courses with content_type tag
+        # Load courses - ADD CONTENT_TYPE MARKER
         if courses_coll:
             courses = list(db[courses_coll].find().limit(1000))
-            # Tag each course with its type
+            logger.info(f"Loaded {len(courses)} courses")
+            # Mark each course with its type
             for course in courses:
                 course['content_type'] = 'course'
-            logger.info(f"Loaded {len(courses)} courses")
             contents.extend(courses)
         
-        # Load blogs with content_type tag
+        # Load blogs - ADD CONTENT_TYPE MARKER
         if blogs_coll:
             blogs = list(db[blogs_coll].find().limit(1000))
-            # Tag each blog with its type
+            logger.info(f"Loaded {len(blogs)} blogs")
+            # Mark each blog with its type
             for blog in blogs:
                 blog['content_type'] = 'blog'
-            logger.info(f"Loaded {len(blogs)} blogs")
             contents.extend(blogs)
         
-        # Load forums with content_type tag
+        # Load forums - ADD CONTENT_TYPE MARKER
         if forums_coll:
             forums = list(db[forums_coll].find().limit(500))
-            # Tag each forum with its type
+            logger.info(f"Loaded {len(forums)} forum posts")
+            # Mark each forum with its type
             for forum in forums:
                 forum['content_type'] = 'forum'
-            logger.info(f"Loaded {len(forums)} forum posts")
             contents.extend(forums)
         
         if not contents:
@@ -161,6 +161,13 @@ def create_sample_data() -> List[dict]:
         {"title": "Introduction to Machine Learning", "description": "Learn ML basics", "topics": ["AI", "Machine Learning"], "category": "Course", "content_type": "course"},
         {"title": "Deep Learning Specialization", "description": "Advanced neural networks", "topics": ["AI", "Deep Learning"], "category": "Course", "content_type": "course"},
         {"title": "Web Development Bootcamp", "description": "Full stack development", "topics": ["Web Development", "Full Stack"], "category": "Course", "content_type": "course"},
+        {"title": "React Complete Guide", "description": "Master React framework", "topics": ["Web Development", "React"], "category": "Course", "content_type": "course"},
+        {"title": "Data Science with Python", "description": "Python for data analysis", "topics": ["Data Science", "Python"], "category": "Course", "content_type": "course"},
+        {"title": "AWS Cloud Practitioner", "description": "AWS fundamentals", "topics": ["Cloud", "AWS"], "category": "Course", "content_type": "course"},
+        {"title": "Cybersecurity Basics", "description": "Network security essentials", "topics": ["Cybersecurity"], "category": "Course", "content_type": "course"},
+        {"title": "NLP with Transformers", "description": "Natural language processing", "topics": ["AI", "NLP"], "category": "Course", "content_type": "course"},
+        {"title": "Docker and Kubernetes", "description": "Container orchestration", "topics": ["DevOps", "Cloud"], "category": "Course", "content_type": "course"},
+        {"title": "UI/UX Design Principles", "description": "User interface design", "topics": ["UX/UI", "Design"], "category": "Course", "content_type": "course"}
     ]
 
 @app.get("/")
@@ -177,9 +184,9 @@ async def health_check():
         "total_content": recommender.index.ntotal if recommender and recommender.index else 0
     }
 
-@app.post("/api/recommend", response_model=RecommendResponse)
+@app.post("/api/recommend")
 async def recommend(request: RecommendRequest):
-    """Generate content recommendations based on user topics - FILTERED BY TYPE"""
+    """Generate content recommendations based on user topics"""
     try:
         if not recommender or not recommender.is_trained:
             raise HTTPException(status_code=503, detail="Recommendation system not ready")
@@ -189,19 +196,13 @@ async def recommend(request: RecommendRequest):
         
         logger.info(f"Generating recommendations for topics: {request.topics}")
         
-        # Get MORE recommendations than needed so we can filter
-        # Request 3x the limit to ensure we have enough after filtering
-        search_limit = request.limit * 3
-        results = recommender.search(request.topics, k=search_limit)
+        # Get recommendations
+        results = recommender.search(request.topics, k=request.limit)
         
-        # Separate content by type
-        courses = []
-        blogs = []
-        forums = []
-        
+        # Format response - NOW INCLUDING CONTENT_TYPE AND EXTRA FIELDS
+        recommendations = []
+        type_counts = {"course": 0, "blog": 0, "forum": 0, "other": 0}
         for content, score in results:
-            content_type = content.get('content_type', 'course')  # Default to course if not set
-            
             # Extract description
             desc = content.get('description', 'No description available')
             if len(desc) > 200:
@@ -216,36 +217,44 @@ async def recommend(request: RecommendRequest):
             elif 'labels' in content and content['labels']:
                 topic = content['labels'][0] if isinstance(content['labels'], list) else content['labels']
             
+            # Base fields that match the Pydantic model
             rec = CourseRecommendation(
-                _id=str(content.get('_id', '')),
                 title=content.get('title', 'Untitled Course'),
                 desc=desc,
                 image=get_image_for_content(content),
                 score=score,
                 topic=topic,
-                content_type=content_type
+                content_type=content.get('content_type', 'course'),
             )
             
-            # Filter into appropriate lists
-            if content_type == 'course' and len(courses) < request.limit:
-                courses.append(rec)
-            elif content_type == 'blog' and len(blogs) < request.limit:
-                blogs.append(rec)
-            elif content_type == 'forum' and len(forums) < request.limit:
-                forums.append(rec)
+            # Add extra fields that aren't in the model (will still go through
+            # because we removed response_model validation on this route)
+            rec_dict = rec.dict()
+            rec_dict['_id'] = str(content.get('_id', ''))
+            rec_dict['tags'] = content.get('tags', [])
+            rec_dict['difficulty'] = content.get('difficulty', 'Intermédiaire')
+            rec_dict['duration_hours'] = content.get('duration_hours')
+            rec_dict['author'] = content.get('author', 'Expert Synapse')
+            rec_dict['views'] = content.get('views', 0)
+            rec_dict['replies'] = content.get('replies', 0)
+            rec_dict['labels'] = content.get('labels', [])
+            
+            recommendations.append(rec_dict)
+            ctype = rec_dict.get("content_type", "other")
+            if ctype not in type_counts:
+                type_counts["other"] += 1
+            else:
+                type_counts[ctype] += 1
         
-        # Combine results - courses first, then blogs, then forums
-        all_recommendations = courses + blogs + forums
-        
-        logger.info(f"Filtered recommendations: {len(courses)} courses, {len(blogs)} blogs, {len(forums)} forums")
-        
-        return RecommendResponse(
-            recommendations=all_recommendations[:request.limit],  # Limit total results
-            total=len(all_recommendations),
-            courses=courses,
-            blogs=blogs,
-            forums=forums
+        logger.info(
+            f"Returning {len(recommendations)} recommendations "
+            f"(courses={type_counts['course']}, blogs={type_counts['blog']}, forums={type_counts['forum']}, other={type_counts['other']})"
         )
+        
+        return {
+            "recommendations": recommendations,
+            "total": len(recommendations)
+        }
         
     except HTTPException:
         raise
@@ -262,8 +271,6 @@ async def refresh_index():
         logger.info("Refreshing FAISS index...")
         
         contents = []
-        
-        # Load with content type tags
         if courses_coll:
             courses = list(db[courses_coll].find().limit(1000))
             for course in courses:

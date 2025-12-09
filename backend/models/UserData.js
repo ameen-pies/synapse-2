@@ -1,23 +1,64 @@
 const mongoose = require('mongoose');
 
+const activityLogSchema = new mongoose.Schema({
+  date: { type: Date, default: Date.now },
+  chapterId: { type: String },
+  chapterTitle: { type: String },
+  timeSpent: { type: Number, default: 0 }, // in minutes
+  action: { 
+    type: String, 
+    enum: ['started', 'continued', 'completed', 'paused'],
+    default: 'continued'
+  }
+}, { _id: false });
+
+const enrolledCourseSchema = new mongoose.Schema({
+  courseId: { type: String, required: true },
+  title: { type: String, required: true },
+  enrolledAt: { type: Date, default: Date.now },
+  lastAccessed: { type: Date, default: Date.now },
+  progress: { type: Number, default: 0, min: 0, max: 100 },
+  completedChapters: { type: Number, default: 0 },
+  totalChapters: { type: Number, default: 1 },
+  completedChapterIds: [{ type: String }],
+  thumbnail: { type: String, default: '' },
+  status: { 
+    type: String, 
+    enum: ['not_started', 'in_progress', 'completed', 'paused'],
+    default: 'in_progress'
+  },
+  completedAt: { type: Date },
+  activityLog: [activityLogSchema] // Track all activity sessions
+});
+
+const certificateSchema = new mongoose.Schema({
+  certificateId: { type: String, required: true, unique: true },
+  courseId: { type: String, required: true },
+  courseTitle: { type: String, required: true },
+  issuedDate: { type: Date, default: Date.now },
+  verificationToken: { type: String, required: true },
+  imageUrl: { type: String, default: '' }, // For future PDF generation
+  completionDate: { type: Date },
+  totalHours: { type: Number, default: 0 }, // Hours spent on course
+  grade: { type: String, default: 'Passed' }
+});
+
 const userDataSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Name is required'],
+    required: true,
     trim: true
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
+    required: true,
     unique: true,
     lowercase: true,
-    trim: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
+    trim: true
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters']
+    required: true
   },
   phone: {
     type: String,
@@ -41,48 +82,43 @@ const userDataSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    default: 'Felix'
+    default: 'initials'
   },
-  // NEW: Subscription field
+  interests: [{
+    type: String
+  }],
+  interestsSetAt: {
+    type: Date
+  },
+  enrolledCourses: [enrolledCourseSchema],
+  certificates: [certificateSchema], // NEW: Store certificates
   subscription: {
-    planId: {
-      type: String,
-      enum: ['basic', 'pro', 'premium', ''],
-      default: ''
-    },
-    planName: {
-      type: String,
-      default: ''
-    },
-    price: {
-      type: String,
-      default: ''
-    },
-    startDate: {
-      type: Date,
-      default: null
-    },
+    planId: String,
+    planName: String,
+    price: Number,
+    startDate: Date,
     status: {
       type: String,
-      enum: ['active', 'cancelled', 'expired', ''],
-      default: ''
+      enum: ['active', 'cancelled', 'expired'],
+      default: 'active'
     },
-    paymentMethod: {
-      type: String,
-      enum: ['card', 'bank', 'mobile', ''],
-      default: ''
-    },
-    nextBillingDate: {
-      type: Date,
-      default: null
-    }
+    paymentMethod: String,
+    nextBillingDate: Date
   },
   createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
     type: Date,
     default: Date.now
   }
 });
 
-userDataSchema.index({ email: 1 });
+// Update the updatedAt timestamp before saving
+userDataSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
 
 module.exports = mongoose.model('UserData', userDataSchema);

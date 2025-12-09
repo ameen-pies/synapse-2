@@ -4,7 +4,8 @@ const connectDB = require('./config/db');
 require('dotenv').config();  // Load environment variables
 
 const app = express();
-
+const analyticsRoutes = require('./routes/analyticsRoutes');
+app.use('/api/analytics', analyticsRoutes);
 // Connect to MongoDB database
 connectDB();
 
@@ -14,6 +15,10 @@ app.use(express.json());  // Parse JSON request bodies
 
 // ROUTES
 app.use('/api/userdata', require('./routes/userData'));
+app.use('/api/courses', require('./routes/courses'));
+app.use('/api/blogs', require('./routes/blogs'));
+app.use('/api/forums', require('./routes/forums'));
+app.use('/api', require('./routes/courseChapters'));
 
 // Test route - check if server is running
 app.get('/', (req, res) => {

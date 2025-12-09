@@ -18,6 +18,7 @@ export default function MFAVerification() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const email = location.state?.email;
+  const fromSignup = location.state?.fromSignup;
 
   useEffect(() => {
     if (!email) {
@@ -101,13 +102,12 @@ export default function MFAVerification() {
       
       console.log("✅ MFA verification successful:", response);
 
-      // Store user data (Node.js format with _id instead of id)
+      // Store user data
       localStorage.setItem('userId', response.user._id || '');
       localStorage.setItem('userName', response.user.name || '');
       localStorage.setItem('userEmail', response.user.email || '');
       localStorage.setItem('userAvatar', response.user.avatar || 'Felix');
       
-      // Store additional user data if needed
       if (response.user.phone) localStorage.setItem('userPhone', response.user.phone);
       if (response.user.phoneCode) localStorage.setItem('userPhoneCode', response.user.phoneCode);
       if (response.user.location) localStorage.setItem('userLocation', response.user.location);
@@ -118,8 +118,20 @@ export default function MFAVerification() {
         description: `Bienvenue ${response.user.name}`,
       });
 
+      // NEW: Check if user has set interests
+      // If from signup or no interests, go to interest selection
+      // Otherwise go to dashboard
       setTimeout(() => {
-        navigate("/dashboard");
+        if (fromSignup) {
+          navigate("/edit-profile", { state: { fromSignup: true } });
+        } else {
+          const hasInterests = localStorage.getItem('userInterests');
+          if (!hasInterests) {
+            navigate("/interests", { state: { email } });
+          } else {
+            navigate("/dashboard");
+          }
+        }
       }, 1000);
 
     } catch (error: any) {

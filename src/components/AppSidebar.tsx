@@ -1,4 +1,4 @@
-import { Home, BookOpen, Users, MessageSquare, BarChart3, Crown, HelpCircle, Settings } from "lucide-react";
+import { Home, BookOpen, Users, MessageSquare, BarChart3, Crown, HelpCircle, Settings, FileText, Award } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -12,12 +12,14 @@ import {
 } from "@/components/ui/sidebar";
 
 const menuItems = [
-  { title: "Dashboard", icon: Home, url: "/dashboard" },
+  { title: "Page d'accueil", icon: Home, url: "/dashboard" },
   { title: "Cours", icon: BookOpen, url: "/courses" },
+  { title: "Blogs & Articles", icon: FileText, url: "/blogs" },
   { title: "Contenu Sauvegardé", icon: BookOpen, url: "/saved" },
   { title: "Forum & Communauté", icon: Users, url: "/community" },
   { title: "Messages", icon: MessageSquare, url: "/messages", badge: 8 },
   { title: "Analytics", icon: BarChart3, url: "/analytics" },
+  { title: "Mes Certificats", icon: Award, url: "/certificates" },
   { title: "Contact", icon: HelpCircle, url: "/contact" },
 ];
 

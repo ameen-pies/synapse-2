@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User, MapPin, Briefcase, Check, Loader2, Shuffle, ChevronLeft, ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { userDataAPI } from "@/services/api";
 
@@ -78,7 +78,10 @@ export default function EditProfile() {
     avatar: "initials"
   });
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  const fromSignup = location.state?.fromSignup;
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -163,7 +166,11 @@ export default function EditProfile() {
       });
 
       setTimeout(() => {
-        navigate("/dashboard");
+        if (fromSignup) {
+          navigate("/interests");
+        } else {
+          navigate("/dashboard");
+        }
       }, 1000);
 
     } catch (error: any) {
@@ -179,7 +186,11 @@ export default function EditProfile() {
   };
 
   const handleSkip = () => {
-    navigate("/dashboard");
+    if (fromSignup) {
+      navigate("/interests");
+    } else {
+      navigate("/dashboard");
+    }
   };
 
   const handleRandomAvatar = () => {

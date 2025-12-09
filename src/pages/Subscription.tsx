@@ -262,7 +262,7 @@ export default function Subscription() {
             <h1 className="text-4xl font-bold text-foreground mb-4">
               {currentSubscription.planId ? "Gérer mon abonnement" : "Choisissez votre plan d'abonnement"}
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-muted-foreground pb-5">
               {currentSubscription.planId 
                 ? "Consultez les détails de votre abonnement ou changez de plan"
                 : "Accédez à des milliers de cours et développez vos compétences sans limites"
