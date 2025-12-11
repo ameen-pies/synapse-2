@@ -6,9 +6,6 @@ require('dotenv').config();  // Load environment variables
 const app = express();
 const analyticsRoutes = require('./routes/analyticsRoutes');
 
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
 
 app.use('/api/analytics', analyticsRoutes);
 // Connect to MongoDB database
