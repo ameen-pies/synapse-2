@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  frontend:
+    build: ./frontend
+    container_name: frontend-elearning
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - elearning_net
+
+  backend:
+    build: ./backend
+    container_name: backend-elearning
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/elearning
+    depends_on:
+      - mongo
+    networks:
+      - elearning_net
+    volumes:
+      - ./backend:/usr/src/app   # Pour dev hot reload
+
+  mongo:
+    image: mongo:5
+    container_name: mongo-elearning
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - elearning_net
+
+networks:
+  elearning_net:
+
+volumes:
+  mongo_data:

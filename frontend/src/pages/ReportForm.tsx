@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -126,16 +131,18 @@ export default function ReportForm({
             <Label className="text-base font-semibold">
               Raison du signalement *
             </Label>
-            <RadioGroup value={reason} onValueChange={setReason}>
-              {reportReasons.map((r) => (
-                <div key={r} className="flex items-center space-x-2">
-                  <RadioGroupItem value={r} id={r} />
-                  <Label htmlFor={r} className="font-normal cursor-pointer">
+            <Select value={reason} onValueChange={setReason}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionnez une raison" />
+              </SelectTrigger>
+              <SelectContent>
+                {reportReasons.map((r) => (
+                  <SelectItem key={r} value={r}>
                     {r}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

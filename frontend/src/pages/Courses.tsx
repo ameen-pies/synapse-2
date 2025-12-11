@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Clock, Layers } from "lucide-react";
+import { Loader2, Clock, Layers, AlertTriangle } from "lucide-react";
+import ReportForm from "@/components/ReportForm";
 
 interface Course {
   _id: string;
@@ -162,60 +163,81 @@ export default function Courses() {
               const duration = calculateCourseDuration(course);
 
               return (
-                <Link key={course._id} to={`/course/${course._id}`}>
-                  <Card className="group h-full overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all flex flex-col">
-                    <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-primary/10 to-purple-500/10">
-                      <img
-                        src={cover}
-                        alt={course.title}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        onError={(e) => {
-                          e.currentTarget.src =
-                            "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800";
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                      {course.difficulty && (
-                        <Badge className="absolute right-3 top-3 bg-primary/90 text-primary-foreground border-0">
-                          {course.difficulty}
-                        </Badge>
-                      )}
-                      {duration && (
-                        <Badge className="absolute left-3 top-3 bg-white/90 text-foreground border-0 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {duration}
-                        </Badge>
-                      )}
-                    </div>
-                    <CardContent className="p-5 space-y-3 flex flex-col flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {course.category && (
-                          <Badge variant="secondary" className="text-xs">
-                            {course.category}
+                <div key={course._id} className="relative group">
+                  <Link to={`/course/${course._id}`}>
+                    <Card className="group h-full overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all flex flex-col">
+                      <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-primary/10 to-purple-500/10">
+                        <img
+                          src={cover}
+                          alt={course.title}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          onError={(e) => {
+                            e.currentTarget.src =
+                              "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800";
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        {course.difficulty && (
+                          <Badge className="absolute right-3 top-3 bg-primary/90 text-primary-foreground border-0">
+                            {course.difficulty}
                           </Badge>
                         )}
-                        {course.tags && course.tags.length > 0 && (
-                          <span className="text-[11px] text-muted-foreground">
-                            <Layers className="inline h-3 w-3 mr-1" />
-                            {course.tags.slice(0, 2).join(" • ")}
-                          </span>
+                        {duration && (
+                          <Badge className="absolute left-3 top-3 bg-white/90 text-foreground border-0 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {duration}
+                          </Badge>
                         )}
                       </div>
-                      <h2 className="font-semibold text-lg text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                        {course.title}
-                      </h2>
-                      <p className="text-sm text-muted-foreground line-clamp-3 flex-1">
-                        {course.description || "Découvrez ce cours et développez de nouvelles compétences."}
-                      </p>
-                      <div className="pt-2 flex items-center justify-between text-xs text-muted-foreground mt-2">
-                        <span>{course.author || "Expert Synapse"}</span>
-                        <Button size="sm" variant="outline">
-                          Voir le cours
+                      <CardContent className="p-5 space-y-3 flex flex-col flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {course.category && (
+                            <Badge variant="secondary" className="text-xs">
+                              {course.category}
+                            </Badge>
+                          )}
+                          {course.tags && course.tags.length > 0 && (
+                            <span className="text-[11px] text-muted-foreground">
+                              <Layers className="inline h-3 w-3 mr-1" />
+                              {course.tags.slice(0, 2).join(" • ")}
+                            </span>
+                          )}
+                        </div>
+                        <h2 className="font-semibold text-lg text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                          {course.title}
+                        </h2>
+                        <p className="text-sm text-muted-foreground line-clamp-3 flex-1">
+                          {course.description || "Découvrez ce cours et développez de nouvelles compétences."}
+                        </p>
+                        <div className="pt-2 flex items-center justify-between text-xs text-muted-foreground mt-2">
+                          <span>{course.author || "Expert Synapse"}</span>
+                          <Button size="sm" variant="outline">
+                            Voir le cours
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                  
+                  {/* Report Button - Positioned absolutely outside the Link */}
+                  <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ReportForm
+                      contentId={course._id}
+                      contentType="course"
+                      contentTitle={course.title}
+                      trigger={
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="h-8 w-8 p-0 bg-white/95 hover:bg-white shadow-md"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <AlertTriangle className="h-4 w-4 text-orange-500" />
                         </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                      }
+                    />
+                  </div>
+                </div>
               );
             })}
           </div>

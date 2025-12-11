@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+
+  node_api:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: synapse-node
+    ports:
+      - "5000:5000"
+    depends_on:
+      - recommender
+      - mongo
+    environment:
+      RECOMMENDER_URL: http://recommender:6000
+      DATABASE_URL: mongodb://mongo:27017/synapse
+
+  recommender:
+    build:
+      context: ./recommendation_system
+      dockerfile: Dockerfile
+    container_name: synapse-recommender
+    ports:
+      - "6000:6000"
+
+  mongo:
+    image: mongo:7
+    container_name: synapse-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:

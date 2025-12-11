@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Loader2, ThumbsUp } from "lucide-react";
+import { MessageSquare, Loader2, ThumbsUp, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import ReportForm from "@/components/ReportForm";
 
 interface ForumComment {
   _id?: string;
@@ -161,14 +162,31 @@ export default function ForumDetail() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-10 max-w-4xl space-y-8">
-        <div>
+        <div className="relative">
           {forum.labels && forum.labels.length > 0 && (
             <Badge variant="secondary" className="mb-2">
               {forum.labels[0]}
             </Badge>
           )}
-          <h1 className="text-3xl font-bold mb-2">{forum.title}</h1>
-          <p className="text-muted-foreground">{forum.description}</p>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold mb-2">{forum.title}</h1>
+              <p className="text-muted-foreground">{forum.description}</p>
+            </div>
+            
+            {/* Report Button for Forum */}
+            <ReportForm
+              contentId={forum._id}
+              contentType="forum"
+              contentTitle={forum.title}
+              trigger={
+                <Button variant="outline" size="sm">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Signaler
+                </Button>
+              }
+            />
+          </div>
         </div>
 
         <Card>

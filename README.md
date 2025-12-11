@@ -130,10 +130,10 @@ Assurez-vous d'avoir installé :
 
 ```bash
 # 1. Cloner le repository
-git clone https://github.com/votre-username/synapse.git
+git clone https://github.com/doas-is/synapse-2
 
 # 2. Naviguer dans le dossier du projet
-cd synapse
+cd synapse-2
 
 # 3. Installer les dépendances du frontend
 npm install
