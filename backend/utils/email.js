@@ -142,7 +142,7 @@ const sendMFAEmail = async (email, code, userName = '') => {
   }
 };
 
-// Send certificate email - FIXED ICONS VERSION
+// Send certificate email
 const sendCertificateEmail = async (recipientEmail, recipientName, courseName, certificateId, completionDate, category) => {
   try {
     const formattedDate = new Date(completionDate).toLocaleDateString('fr-FR', {
@@ -603,4 +603,252 @@ const sendCertificateEmail = async (recipientEmail, recipientName, courseName, c
   }
 };
 
-module.exports = { sendMFAEmail, sendCertificateEmail };
+// Send report email to admin - NEW FUNCTION
+const sendReportEmail = async (adminEmail, reportData) => {
+  try {
+    const {
+      reportId,
+      contentType,
+      contentTitle,
+      contentId,
+      reporterName,
+      reporterEmail,
+      reason,
+      message,
+      reportedAt
+    } = reportData;
+
+    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const contentTypeLabel = {
+      course: 'Cours',
+      blog: 'Blog',
+      forum: 'Forum'
+    }[contentType] || 'Contenu';
+
+    const mailOptions = {
+      from: `"Synapse Reports" <${process.env.SENDER_EMAIL}>`,
+      to: adminEmail,
+      subject: `🚨 Nouveau signalement: ${contentTypeLabel} - ${contentTitle}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body {
+              font-family: 'Inter', -apple-system, sans-serif;
+              line-height: 1.6;
+              color: #374151;
+              background-color: #f9fafb;
+              margin: 0;
+              padding: 20px;
+            }
+            .container {
+              max-width: 600px;
+              margin: 0 auto;
+              background: white;
+              border-radius: 16px;
+              overflow: hidden;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+              background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+              color: white;
+              padding: 30px;
+              text-align: center;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+              font-weight: 600;
+            }
+            .alert-icon {
+              font-size: 48px;
+              margin-bottom: 10px;
+            }
+            .content {
+              padding: 30px;
+            }
+            .info-section {
+              background: #f9fafb;
+              border-radius: 12px;
+              padding: 20px;
+              margin: 20px 0;
+              border-left: 4px solid #3b82f6;
+            }
+            .info-row {
+              display: flex;
+              margin-bottom: 12px;
+              padding-bottom: 12px;
+              border-bottom: 1px solid #e5e7eb;
+            }
+            .info-row:last-child {
+              border-bottom: none;
+              margin-bottom: 0;
+              padding-bottom: 0;
+            }
+            .info-label {
+              font-weight: 600;
+              color: #6b7280;
+              min-width: 140px;
+            }
+            .info-value {
+              color: #1f2937;
+              flex: 1;
+            }
+            .reason-box {
+              background: #fef3c7;
+              border: 2px solid #fbbf24;
+              border-radius: 12px;
+              padding: 20px;
+              margin: 20px 0;
+            }
+            .reason-label {
+              font-weight: 600;
+              color: #92400e;
+              margin-bottom: 8px;
+              font-size: 14px;
+              text-transform: uppercase;
+            }
+            .reason-text {
+              color: #78350f;
+              font-size: 16px;
+              font-weight: 500;
+            }
+            .message-box {
+              background: #f0f9ff;
+              border-radius: 12px;
+              padding: 20px;
+              margin: 20px 0;
+            }
+            .message-label {
+              font-weight: 600;
+              color: #0369a1;
+              margin-bottom: 8px;
+            }
+            .message-text {
+              color: #0c4a6e;
+              white-space: pre-wrap;
+            }
+            .cta-button {
+              display: inline-block;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white !important;
+              text-decoration: none;
+              padding: 14px 28px;
+              border-radius: 10px;
+              font-weight: 600;
+              margin: 10px 5px;
+              text-align: center;
+            }
+            .button-container {
+              text-align: center;
+              margin: 30px 0;
+            }
+            .footer {
+              background: #f9fafb;
+              padding: 20px;
+              text-align: center;
+              color: #6b7280;
+              font-size: 14px;
+              border-top: 1px solid #e5e7eb;
+            }
+            .report-id {
+              font-family: 'Monaco', monospace;
+              background: #e5e7eb;
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="alert-icon">🚨</div>
+              <h1>Nouveau Signalement</h1>
+              <p style="margin: 5px 0 0 0; opacity: 0.9;">Action requise</p>
+            </div>
+            
+            <div class="content">
+              <p style="font-size: 16px; margin-bottom: 20px;">
+                Un utilisateur a signalé du contenu qui nécessite votre attention.
+              </p>
+              
+              <div class="info-section">
+                <div class="info-row">
+                  <div class="info-label">ID Signalement:</div>
+                  <div class="info-value"><span class="report-id">${reportId}</span></div>
+                </div>
+                <div class="info-row">
+                  <div class="info-label">Type de contenu:</div>
+                  <div class="info-value"><strong>${contentTypeLabel}</strong></div>
+                </div>
+                <div class="info-row">
+                  <div class="info-label">Titre du contenu:</div>
+                  <div class="info-value"><strong>${contentTitle}</strong></div>
+                </div>
+                <div class="info-row">
+                  <div class="info-label">ID du contenu:</div>
+                  <div class="info-value"><span class="report-id">${contentId}</span></div>
+                </div>
+                <div class="info-row">
+                  <div class="info-label">Signalé par:</div>
+                  <div class="info-value">${reporterName}</div>
+                </div>
+                <div class="info-row">
+                  <div class="info-label">Email:</div>
+                  <div class="info-value">${reporterEmail}</div>
+                </div>
+                <div class="info-row">
+                  <div class="info-label">Date:</div>
+                  <div class="info-value">${reportedAt}</div>
+                </div>
+              </div>
+              
+              <div class="reason-box">
+                <div class="reason-label">⚠️ Raison du signalement</div>
+                <div class="reason-text">${reason}</div>
+              </div>
+              
+              ${message ? `
+              <div class="message-box">
+                <div class="message-label">💬 Message de l'utilisateur</div>
+                <div class="message-text">${message}</div>
+              </div>
+              ` : ''}
+              
+              <div class="button-container">
+                <a href="${frontendURL}/admin/reports" class="cta-button">
+                  Voir tous les signalements
+                </a>
+                <a href="${frontendURL}/${contentType}/${contentId}" class="cta-button">
+                  Voir le contenu
+                </a>
+              </div>
+              
+              <p style="color: #6b7280; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                Ce signalement a été automatiquement enregistré dans la base de données avec le statut "pending".
+              </p>
+            </div>
+            
+            <div class="footer">
+              <strong>synapse</strong><br>
+              © 2025 Synapse. Tous droits réservés.
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('✅ Report email sent successfully to admin:', adminEmail);
+    return true;
+  } catch (error) {
+    console.error('❌ Error sending report email:', error);
+    return false;
+  }
+};
+
+module.exports = { sendMFAEmail, sendCertificateEmail, sendReportEmail };

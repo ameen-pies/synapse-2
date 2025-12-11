@@ -5,6 +5,11 @@ require('dotenv').config();  // Load environment variables
 
 const app = express();
 const analyticsRoutes = require('./routes/analyticsRoutes');
+
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+
 app.use('/api/analytics', analyticsRoutes);
 // Connect to MongoDB database
 connectDB();
@@ -19,6 +24,9 @@ app.use('/api/courses', require('./routes/courses'));
 app.use('/api/blogs', require('./routes/blogs'));
 app.use('/api/forums', require('./routes/forums'));
 app.use('/api', require('./routes/courseChapters'));
+// the reports route
+const reportsRouter = require('./routes/reports');
+app.use('/api/reports', reportsRouter);
 
 // Test route - check if server is running
 app.get('/', (req, res) => {
@@ -30,3 +38,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
+
+
