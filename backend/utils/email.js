@@ -1,12 +1,29 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-// Create transporter
+// Create transporter with explicit configuration for better compatibility
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587, // Use port 587 instead of 465
+  secure: false, // Use STARTTLS
   auth: {
     user: process.env.SENDER_EMAIL,
     pass: process.env.SENDER_PASSWORD
+  },
+  tls: {
+    rejectUnauthorized: false // Accept self-signed certificates
+  },
+  connectionTimeout: 10000, // 10 seconds timeout
+  greetingTimeout: 10000,
+  socketTimeout: 10000
+});
+
+// Verify transporter configuration on startup
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('❌ Email transporter verification failed:', error);
+  } else {
+    console.log('✅ Email server is ready to send messages');
   }
 });
 
@@ -138,6 +155,11 @@ const sendMFAEmail = async (email, code, userName = '') => {
     return true;
   } catch (error) {
     console.error('❌ Error sending MFA email:', error);
+    console.error('Error details:', {
+      code: error.code,
+      command: error.command,
+      response: error.response
+    });
     return false;
   }
 };
@@ -603,7 +625,7 @@ const sendCertificateEmail = async (recipientEmail, recipientName, courseName, c
   }
 };
 
-// Send report email to admin - NEW FUNCTION
+// Send report email to admin
 const sendReportEmail = async (adminEmail, reportData) => {
   try {
     const {
