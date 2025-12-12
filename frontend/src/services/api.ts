@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { UserData } from '../types';
 
-// Base URL for Node.js Express backend on port 5000
-const API_URL = 'http://localhost:5000/api/userdata';
+// Use environment variable for API URL, fallback to localhost for development
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = `${API_BASE_URL}/api/userdata`;
 
 // Create axios instance with default config
 const axiosInstance = axios.create({
