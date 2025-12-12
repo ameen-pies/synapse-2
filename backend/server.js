@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 require('dotenv').config();  // Load environment variables
+
 const app = express();
 const analyticsRoutes = require('./routes/analyticsRoutes');
 
@@ -17,6 +18,7 @@ app.use(cors({
   ],
   credentials: true
 }));  // Allow frontend to make requests
+
 app.use(express.json());  // Parse JSON request bodies
 
 // ROUTES
